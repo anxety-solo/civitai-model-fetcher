@@ -3,7 +3,8 @@
   <img src="csl-preview.png" alt="Console Preview" width="800">
 </div>
 
-> [!Warning] > **This script was primarily written for personal use with the help of AI.**</br>
+> [!Note]
+> **This script was primarily written for personal use with the help of AI.**</br>
 > _Since I don't really care about its elegance (as long as it works :33), the code is written accordingly!_</br>
 > Please note: THIS script does not work directly with models, but rather with DATA recorded in files.
 
