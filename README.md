@@ -1,6 +1,6 @@
 <div align="center">
   <h1>CivitAI Model Information Fetcher</h1>
-  <img src="csl-preview.png" alt="Console Preview" width="800">
+  <img src=".github/preview.webp" alt="Console Preview" width="auto">
 </div>
 
 > [!Note]
@@ -10,146 +10,144 @@
 
 ## Features
 
--   🔍 **Multi-format Input Support**: Process URLs from command line, files (JSON, Python, TXT), or mixed sources
--   🚀 **Batch Processing**: Handle multiple URLs concurrently with connection pooling
--   📊 **Rich Data Export**: Export model information to structured JSON format
--   🎨 **Colored Console Output**: Beautiful, organized display with syntax highlighting
--   🔄 **Retry Logic**: Robust error handling with automatic retries for failed requests
+- 🔍 **Multi-format Input** — URLs, model IDs, file hashes, JSON / Python / TXT files
+- 🚀 **Concurrent fetching** — connection pooling + single-flight cache
+- 🏷️ **Smart availability labels** — Public / Paid / Early Access (with days left)
+- 📊 **JSON export** with optional filters by `baseModel` and `contenType`
+- 🎨 **Colored console output** with dynamic column widths
+- 🔑 **API key management** (up to 5 keys, rotation)
+- 📦 **by-hash lookup** — AutoV1 / AutoV2 / SHA256 / CRC32 / BLAKE3
+- 📤 **`--json` mode** — raw API response for scripting
 
 ## Installation
-
-1. Clone the repository:
 
 ```bash
 git clone https://github.com/anxety-solo/civitai-model-fether
 cd civitai-model-fetcher
+
+pip install aiohttp
 ```
 
-2. Install required dependencies:
-
-```bash
-pip install aiohttp colorama
-```
-
-3. Get your CivitAI API key from [CivitAI Settings](https://civitai.com/user/account)
+Get an API key at [CivitAI → Account Settings](https://civitai.red/user/account) _(optional for public metadata, required for gated content)_
 
 ## Usage
 
-### Basic Commands
+### Basic
 
 ```bash
-# Process single URL
-python CivitAI_fetcher.py https://civitai.com/models/12345
+# By URL
+python civitai_fetcher.py https://civitai.red/models/12345
 
-# Process by model ID (slower, as it needs to verify that the ID is valid)
-python CivitAI_fetcher.py 12345
+# By model ID
+python civitai_fetcher.py 12345
 
-# Process multiple URLs
-python CivitAI_fetcher.py url1 url2 url3
+# By file hash
+python civitai_fetcher.py A5F58EB1C3
 
-# Process URLs from file
-python CivitAI_fetcher.py -f models.json
+# Multiple inputs
+python civitai_fetcher.py 12345 67890 https://civitai.red/models/999
 
-# Show model URLs in output
-python CivitAI_fetcher.py -f models.txt -u
-
-# Show download URLs
-python CivitAI_fetcher.py -f models.py -d
-
-# Export data to JSON
-python CivitAI_fetcher.py -f models.json --export my_models.json
-
-# Enable verbose logging (primarily for debugging)
-python CivitAI_fetcher.py -f models.txt -v
+# From file
+python civitai_fetcher.py -f models.json
+python civitai_fetcher.py -f models.py -d
+python civitai_fetcher.py -f models.txt -u
 ```
 
-### Advanced Usage
+### Advanced
 
 ```bash
-# Combine multiple input sources
-python CivitAI_fetcher.py url1 url2 -i url3 url4 -f models.json
+# Combine sources
+python civitai_fetcher.py url1 url2 -i 12345 A5F58EB1C3 -f models.json
+
+# Export with filters
+python civitai_fetcher.py -f models.txt --export --type LORA --base-model "SD 1.5" SDXL
+
+# Raw JSON output
+python civitai_fetcher.py 4384 --json
 
 # Manage API keys
-python CivitAI_fetcher.py -k
+python civitai_fetcher.py -k
 
-# Show file format examples
-python CivitAI_fetcher.py --show-help
+# File format help
+python civitai_fetcher.py --show-help
+
+# Verbose logging
+python civitai_fetcher.py -i 23423 -v
 ```
 
 ## Command Line Options
 
-| Option                | Description                                        |
-| --------------------- | -------------------------------------------------- |
-| `urls`                | Input URLs (can be used without -i flag)           |
-| `-i, --input`         | Additional input URLs (space/comma separated)      |
-| `-f, --file`          | Path to model list file (JSON/Python/TXT)          |
-| `-u, --show-url`      | Display model URLs                                 |
-| `-d, --show-download` | Display download URLs                              |
-| `-k, --change-key`    | Manage API keys (add/remove)                       |
-| `--show-help`         | Show file format examples                          |
-| `--export`            | Export data to JSON (default: civitai_export.json) |
-| `-v, --verbose`       | Enable verbose logging                             |
+| Option | Description |
+|--------|-------------|
+| `urls` | Input URLs, model IDs or hashes (positional) |
+| `-i, --input` | Additional URLs / IDs / hashes |
+| `-f, --file` | Path to model list (JSON / Python / TXT) |
+| `-u, --show-url` | Show model page URLs in version table |
+| `-d, --show-download` | Show download URLs in version table |
+| `-k, --change-key` | Manage stored API keys |
+| `-t, --token` | Use this API key for the current run only |
+| `--json` | Print raw API response as JSON |
+| `--export [FILE]` | Export to JSON (default: timestamped file) |
+| `--base-model ...` | Filter export by baseModel values |
+| `--type ...` | Filter export by model type values |
+| `--show-help` | Show supported file format examples |
+| `-v, --verbose` | Enable debug logging |
 
 ## Input File Formats
 
-### JSON Format
+### JSON
 
 ```json
 {
-    "My Models 1": [
-        { "url": "https://civitai.com/models/1234", "name": "model1.safetensors" },
-        { "url": "https://civitai.com/models/5678", "name": "model2.safetensors" }
-    ],
-    "My Models 2": [{ "url": "https://civitai.com/models/9012", "name": "model3.safetensors" }]
+    "My Models": [
+        {"url": "https://civitai.red/models/1234", "name": "model1.safetensors"}
+    ]
 }
 ```
 
-### Python Format
+### Python catalog (any nesting)
 
 ```python
-model_list = {
-    "Category 1": [
-        {"url": "https://civitai.com/models/1234", "name": "modelA.safetensors"}
-    ]
+SD = {
+    "model": {
+        "Model Anime": [
+            {"url": "https://civitai.red/api/download/models/5678", "name": "anime.safetensors"}
+        ]
+    },
+    "vae": {}
 }
 
-another_collection = {
-    "Category 2": [
-        {"url": "https://civitai.com/models/5678", "name": "modelB.safetensors"}
-    ]
-}
+MODEL_CATEGORIES = {"SD": SD}
 ```
 
-### Text Format
+### Text
 
 ```text
 https://civitai.com/models/1234
-https://civitai.com/models/5678 model1.safetensors
-https://civitai.com/models/9012, https://civitai.com/models/3456
+https://civitai.green/models/5678 model1.safetensors
+https://civitai.red/api/download/models/9012, https://civitai.com/models/3456
 ```
 
-## Output Data Structure
-
-The exported JSON contains structured model information:
+## Export Structure
 
 ```json
 {
-    "model_id": "12345",
-    "model_name": "Example Model",
+    "model_id": 1234,
+    "model_name": "Anime",
     "model_type": "Checkpoint",
-    "url": "https://civitai.com/models/12345",
+    "url": "https://civitai.red/models/1234",
     "versions": [
         {
-            "version_id": "67890",
+            "version_id": 5678,
             "version_name": "v1.0",
-            "created_at": "2024-01-01T00:00:00.000Z",
-            "updated_at": "2024-01-01T00:00:00.000Z",
-            "download_url": "https://civitai.com/api/download/models/67890",
+            "created_at": "...",
+            "updated_at": "...",
+            "download_url": "https://civitai.red/api/download/models/9012",
             "early_access": false,
-            "size": "2.1 GB",
-            "base_model": "SD 1.5",
-            "trained_words": ["anime"],
-            "url": "https://civitai.com/models/12345?modelVersionId=67890"
+            "size": "6.5 GB",
+            "base_model": "Illustrious",
+            "trained_words": [],
+            "url": "https://civitai.red/models/1234?modelVersionId=5678"
         }
     ]
 }
@@ -157,7 +155,14 @@ The exported JSON contains structured model information:
 
 ## Configuration
 
-The tool automatically creates a `data/` directory to store:
+The script creates a `data/` directory:
 
--   `civitai_config.json` - API key configuration
--   `exports/` - Exported JSON files
+| Path | Purpose |
+|------|---------|
+| `data/config.json` | Stored API keys |
+| `data/exports/` | Exported JSON files |
+
+API keys can also be supplied via:
+
+- `-t / --token` (one-shot)
+- Environment variable `CIVITAI_API_KEY` (comma-separated for multiple)
